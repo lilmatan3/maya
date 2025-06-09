@@ -17,3 +17,10 @@ This project combines cutting-edge open-source AI technologies into a smart assi
 
 ## 📂 Structure
 
+
+## 🚀 Quick Start
+
+```bash
+git clone https://github.com/yourusername/aya-rag-agent.git
+cd aya-rag-agent
+# Set up environment and run
