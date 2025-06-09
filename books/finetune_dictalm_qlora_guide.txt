@@ -1,0 +1,120 @@
+# מדריך מלא: Fine-Tuning על DictaLM2.0-Instruct עם QLoRA בעברית
+
+## פרק א': הכנת סביבת הפיתוח
+```bash
+mkdir ~/hebproj
+cd ~/hebproj
+python3 -m venv venv
+source venv/bin/activate
+```
+
+## פרק ב': התקנת ספריות תלוייות
+```bash
+pip install --upgrade pip
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu129
+pip install transformers bitsandbytes peft accelerate datasets scikit-learn
+```
+
+בדיקת תקינות:
+```bash
+python -m bitsandbytes
+# פלט תקין: SUCCESS!
+```
+
+## פרק ג': הורדת המודל DictaLM2.0-Instruct
+```bash
+cd ~/hebproj
+git clone https://huggingface.co/dicta-il/dictalm2.0-instruct
+```
+
+## פרק ד': יצירת קובץ הדאטא `aya_dataset.jsonl`
+```bash
+nano aya_dataset.jsonl
+# הדבק שורות בפורמט JSONL לדאטאסט שירות לקוחות
+```
+
+## פרק ה': אימון עם QLoRA
+
+### גרסת 24GB+ VRAM
+```bash
+nano qlora_train.py
+```
+(קוד מלא נמצא בהמשך הקובץ)
+
+### גרסת Lite - עבור כרטיסים עם 8GB VRAM
+```bash
+nano qlora_train_lite.py
+```
+(קוד מלא נמצא בהמשך הקובץ)
+
+הרצה:
+```bash
+python3 qlora_train.py
+# או:
+python3 qlora_train_lite.py
+```
+
+## פרק ו': בדיקת המודל המאומן
+```bash
+nano tryto.py
+```
+(הדבק את קוד הבדיקה)
+
+הרצה:
+```bash
+python3 tryto.py
+```
+
+אם קיבלת תשובות טובות – הצלחת 🎉
+
+---
+
+## 🔧 הסברים על רכיבים חשובים
+
+| רכיב בקוד                | הסבר |
+|--------------------------|------|
+| `AutoTokenizer`          | הופך טקסט למספרים שהמודל מבין (token IDs) |
+| `AutoModelForCausalLM`   | מודל לצ'אט/השלמה (כמו GPT) |
+| `load_dataset`           | טוען קובץ JSONL |
+| `Trainer`                | כלי אימון חכם של Hugging Face |
+| `LoraConfig`             | מגדיר אילו שכבות יעודכנו באימון LoRA |
+
+---
+
+## פרמטרים עיקריים בקונפיגורציה של QLoRA
+
+| פרמטר | הסבר |
+|--------|------|
+| `load_in_4bit=True` | הופך את המודל לקל בזיכרון |
+| `bnb_4bit_quant_type="nf4"` | קוונטיזציה מדויקת וחסכונית |
+| `bnb_4bit_compute_dtype=torch.float16` | מתאים לכרטיסים עם פחות מ־16GB VRAM |
+| `r=32` | עומק ההתאמה של LoRA |
+| `gradient_accumulation_steps=16` | מדמה באצ'ים גדולים |
+| `per_device_train_batch_size=2` | מאמן רק 2 דוגמאות בכל פעם (לכרטיסים חלשים) |
+| `fp16=True` | float16 לשמירה על זיכרון |
+| `bf16=False` | לא מתאים על כרטיסים רגילים |
+
+---
+
+## 🔁 הסבר: למה gradient_accumulation_steps גדול?
+
+כדי להתמודד עם מגבלת VRAM קטנה, אנו מאמנים על באצ'ים קטנים מאוד (batch_size=2),
+אבל "מדמים" באצ'ים גדולים יותר בעזרת הצטברות גרדיאנטים:
+```
+batch_size = 2
+gradient_accumulation_steps = 16
+# בפועל זה כאילו train_batch = 32
+```
+
+---
+
+## 📂 קבצים עיקריים במדריך
+
+- qlora_train.py — אימון רגיל (למכונות חזקות)
+- qlora_train_lite.py — אימון ל־8GB VRAM
+- tryto.py — קובץ לבדיקה שהמודל המאומן מגיב היטב
+- aya_dataset.jsonl — הדאטאסט בפורמט JSONL
+
+---
+
+בהצלחה! ✨
